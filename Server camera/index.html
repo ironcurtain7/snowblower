@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raspberry Pi Camera</title>
+    <style>
+        #video-feed {
+            width: 640px;
+            height: 480px;
+            border: 1px solid #000;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <h1>Raspberry Pi Camera</h1>
+    <div style="position: relative;">
+        <img id="video-feed" src="{{ url_for('video_feed') }}">
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+
+    <script>
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let startX, startY;
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            startX = e.offsetX;
+            startY = e.offsetY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(startX, startY, e.offsetX - startX, e.offsetY - startY);
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (isDrawing) {
+                isDrawing = false;
+                let endX = e.offsetX;
+                let endY = e.offsetY;
+
+                fetch('/select_region', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        x1: startX,
+                        y1: startY,
+                        x2: endX,
+                        y2: endY
+                    })
+                });
+            }
+        });
+    </script>
+</body>
+</html>
